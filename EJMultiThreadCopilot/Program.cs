@@ -4,8 +4,8 @@ namespace EJMultiThreadCopilot
 {
     class Program
     {
-        // Use ThreadLocal to create a separate Random instance for each thread
-        private static ThreadLocal<Random> random = new(() => new Random());
+        // Use ThreadLocal to create a separate XorShiftRandom instance for each thread
+        private static ThreadLocal<XorShiftRandom> random = new ThreadLocal<XorShiftRandom>(() => new XorShiftRandom((uint)DateTime.Now.Ticks & 0x0000FFFF));
         private static volatile bool keepRunning = true;
 
         static void Main(string[] args)
@@ -72,7 +72,7 @@ namespace EJMultiThreadCopilot
                 Sum += totalMatchCounts[i];
                 Console.WriteLine($"{i} matches: {totalMatchCounts[i]} tickets");
             }
-            Console.WriteLine("Total: " + Sum);
+            Console.WriteLine("Total : " + Sum);
         }
 
         static (HashSet<int>, HashSet<int>) GenerateTicket()
@@ -98,6 +98,27 @@ namespace EJMultiThreadCopilot
         static int CountMatches(HashSet<int> set1, HashSet<int> set2)
         {
             return set1.Count(set2.Contains);
+        }
+    }
+
+    public class XorShiftRandom
+    {
+        private uint _seed;
+
+        public XorShiftRandom(uint seed)
+        {
+            _seed = seed;
+        }
+
+        public int Next(int minValue, int maxValue)
+        {
+            // Generate a random uint
+            _seed ^= _seed << 13;
+            _seed ^= _seed >> 17;
+            _seed ^= _seed << 5;
+
+            // Scale the uint to the desired range and return
+            return (int)(_seed % (maxValue - minValue)) + minValue;
         }
     }
 }
