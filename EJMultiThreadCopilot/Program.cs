@@ -1,9 +1,11 @@
-﻿namespace EJMultiThreadCopilot
+﻿using System.Collections.Concurrent;
+
+namespace EJMultiThreadCopilot
 {
     class Program
     {
         // Use ThreadLocal to create a separate Random instance for each thread
-        private static ThreadLocal<Random> random = new ThreadLocal<Random>(() => new Random());
+        private static ThreadLocal<Random> random = new(() => new Random());
         private static volatile bool keepRunning = true;
 
         static void Main(string[] args)
@@ -12,7 +14,7 @@
             Console.WriteLine($"Your ticket numbers are: {string.Join(", ", userTicket.Item1)} and additional numbers: {string.Join(", ", userTicket.Item2)}");
 
             var totalMatchCounts = new int[8];
-            var allLocalMatchCounts = new List<int[]>();
+            var allLocalMatchCounts = new ConcurrentBag<int[]>();
             var threads = new List<Thread>();
 
             // Get the number of processor cores
@@ -35,10 +37,7 @@
                         localMatchCounts[totalMatches]++;
                     }
 
-                    lock (allLocalMatchCounts)
-                    {
-                        allLocalMatchCounts.Add(localMatchCounts);
-                    }
+                    allLocalMatchCounts.Add(localMatchCounts);
                 });
 
                 threads.Add(thread);
@@ -67,10 +66,13 @@
             }
 
             Console.WriteLine("Statistic of matches:");
+            Int64 Sum = 0;
             for (int i = 0; i < totalMatchCounts.Length; i++)
             {
+                Sum += totalMatchCounts[i];
                 Console.WriteLine($"{i} matches: {totalMatchCounts[i]} tickets");
             }
+            Console.WriteLine("Total: " + Sum);
         }
 
         static (HashSet<int>, HashSet<int>) GenerateTicket()
@@ -95,15 +97,7 @@
 
         static int CountMatches(HashSet<int> set1, HashSet<int> set2)
         {
-            int matches = 0;
-            foreach (var num in set1)
-            {
-                if (set2.Contains(num))
-                {
-                    matches++;
-                }
-            }
-            return matches;
+            return set1.Count(set2.Contains);
         }
     }
 }
