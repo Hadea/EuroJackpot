@@ -1,13 +1,19 @@
-﻿using System.Diagnostics;
-
-namespace EJMultiThreadTicket
+﻿namespace EJMultiThreadTicket
 {
     public class EuroJackpot
     {
         public static bool KeepRunning = true;
+        private readonly RandomXorShift rndGen;
+        private bool unique;
+        private byte numbersFound;
+        public readonly UInt32[] statistic;
+        public Thread? thread;
+        private readonly byte[]? ticketToCompare;
+        readonly byte[] ticket = new byte[7];
+
         public EuroJackpot(byte[] TicketToCompare)
         {
-            rndGen = new();
+            rndGen = new((uint)DateTime.Now.Ticks & 0x0000FFFF);
             statistic = new UInt32[8];
             thread = new(() => { GetTicketMultithread(); });
             ticketToCompare = TicketToCompare;
@@ -15,28 +21,20 @@ namespace EJMultiThreadTicket
 
         public EuroJackpot()
         {
-            rndGen = new();
+            rndGen = new((uint)DateTime.Now.Ticks & 0x0000FFFF);
             statistic = new UInt32[8];
         }
 
-
-        private readonly Random rndGen;
-
-        private bool unique;
-        private byte numbersFound;
-        public readonly UInt32[] statistic;
-        public Thread thread;
-        private byte[] ticketToCompare;
-        byte[] ticket = new byte[7];
-
         public void GetTicketMultithread()
         {
+            if (ticketToCompare == null) throw new NullReferenceException("Unable to compare to NULL ticket");
             while (KeepRunning)
             {
                 GetTicket(ticket);
                 statistic[EuroJackpot.CompareTickets(ticket, ticketToCompare)]++;
             }
         }
+
         public void GetTicket(byte[] TicketToFill)
         {
             // first number is always unique
