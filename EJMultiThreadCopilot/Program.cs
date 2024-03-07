@@ -5,7 +5,7 @@ namespace EJMultiThreadCopilot
     class Program
     {
         // Use ThreadLocal to create a separate XorShiftRandom instance for each thread
-        private static ThreadLocal<XorShiftRandom> random = new ThreadLocal<XorShiftRandom>(() => new XorShiftRandom((uint)DateTime.Now.Ticks & 0x0000FFFF));
+        private static readonly ThreadLocal<XorShiftRandom> random = new(() => new XorShiftRandom((uint)DateTime.Now.Ticks & 0x0000FFFF));
         private static volatile bool keepRunning = true;
 
         static void Main(string[] args)
@@ -18,10 +18,10 @@ namespace EJMultiThreadCopilot
             var threads = new List<Thread>();
 
             // Get the number of processor cores
-            int coreCount = Environment.ProcessorCount;
+            int? coreCount = Environment.ProcessorCount;
 
             // Create and start one thread per core
-            for (int i = 0; i < coreCount; i++)
+            for (int? i = 0; i < coreCount; i++)
             {
                 var thread = new Thread(() =>
                 {
@@ -66,7 +66,7 @@ namespace EJMultiThreadCopilot
             }
 
             Console.WriteLine("Statistic of matches:");
-            Int64 Sum = 0;
+            Int64? Sum = 0;
             for (int i = 0; i < totalMatchCounts.Length; i++)
             {
                 Sum += totalMatchCounts[i];
@@ -101,24 +101,17 @@ namespace EJMultiThreadCopilot
         }
     }
 
-    public class XorShiftRandom
+    public class XorShiftRandom(uint seed)
     {
-        private uint _seed;
-
-        public XorShiftRandom(uint seed)
-        {
-            _seed = seed;
-        }
-
         public int Next(int minValue, int maxValue)
         {
             // Generate a random uint
-            _seed ^= _seed << 13;
-            _seed ^= _seed >> 17;
-            _seed ^= _seed << 5;
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
 
             // Scale the uint to the desired range and return
-            return (int)(_seed % (maxValue - minValue)) + minValue;
+            return (int)(seed % (maxValue - minValue)) + minValue;
         }
     }
 }
