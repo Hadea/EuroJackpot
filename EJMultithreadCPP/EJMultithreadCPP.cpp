@@ -1,5 +1,6 @@
 #include <iostream>
 #include <random>
+#include <chrono>
 
 #define rnd50 rand() % 50 +1;
 #define rnd12 rand() % 12 +1;
@@ -50,10 +51,18 @@ static int compareTickets(int* ticketA, int* ticketB)
 	return wins;
 }
 
-static void printTicket(int* ticket)
+static void printArray(int* ticket, int length)
 {
 
-	for (int i = 0; i < 7; ++i)
+	for (int i = 0; i < length; ++i)
+		std::cout << ticket[i] << " ";
+	std::cout << std::endl;
+}
+
+static void printArray(int64_t* ticket, int length)
+{
+
+	for (int i = 0; i < length; ++i)
 		std::cout << ticket[i] << " ";
 	std::cout << std::endl;
 }
@@ -64,15 +73,30 @@ int main()
 
 	std::cout << "EuroJackpot Lottery" << std::endl;
 
-	int* ticketA = new int[7];
-	int* ticketB = new int[7];
+	int ticketA[7] = { 0 };
+	int ticketB[7] = { 0 };
+	int64_t statistic[8] = { 0 };
+
 
 	fillTicket(ticketA);
-	fillTicket(ticketB);
 
-	printTicket(ticketA);
-	printTicket(ticketB);
+	std::chrono::time_point start = std::chrono::steady_clock::now();
 
-	std::cout << "Identical: " << compareTickets(ticketA, ticketB);
+	while (std::chrono::steady_clock::now() - start < std::chrono::seconds(10))
+	{
+		fillTicket(ticketB);
+		++statistic[compareTickets(ticketA, ticketB)];
+	}
+
+	printArray(ticketA, 7);
+	printArray(statistic, 8);
+
+	int sum = 0;
+	for (size_t i = 0; i < 8; i++)
+	{
+		sum += statistic[i];
+	}
+
+	std::cout << "sumber of draws: " << sum;
 
 }
